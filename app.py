@@ -218,21 +218,20 @@ if agent_type == "Learning Orchestrator":
                 func = local_env[function_name]
 
                 # -----------------------------------------
-                # MULTIPLE TEST CASES
+                # DYNAMIC TEST CASES
                 # -----------------------------------------
 
-                test_cases = [
-                    ([1, 2, 3, 4], [1, 4, 9, 16]),
-                    ([2, 5], [4, 25]),
-                    ([0], [0]),
-                    ([], [])
-                ]
+                test_cases = module["test_cases"]
 
                 passed = 0
 
                 st.markdown("## 🧪 Test Case Results")
 
-                for idx, (inp, expected) in enumerate(test_cases):
+                for idx, case in enumerate(test_cases):
+
+                    inp = case["input"]
+
+                    expected = case["expected"]
 
                     try:
 
@@ -280,10 +279,10 @@ if agent_type == "Learning Orchestrator":
                 st.markdown("---")
 
                 st.markdown(
-                    f"### ✅ Passed {passed}/4 Test Cases"
+                    f"### ✅ Passed {passed}/{len(test_cases)} Test Cases"
                 )
 
-                if passed == 4:
+                if passed == len(test_cases):
 
                     st.balloons()
 
