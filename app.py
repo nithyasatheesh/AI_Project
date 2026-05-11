@@ -201,16 +201,108 @@ if agent_type == "Learning Orchestrator":
 
     if st.button("▶ Run Test"):
 
-        if "return" in user_code:
+        try:
 
-            st.success(
-                "✅ Basic test passed"
-            )
+            local_env = {}
 
-        else:
+            exec(user_code, {}, local_env)
+
+            function_name = module["function_name"]
+
+            if function_name not in local_env:
+
+                st.error("❌ Function not found")
+
+            else:
+
+                func = local_env[function_name]
+
+                # -----------------------------------------
+                # MULTIPLE TEST CASES
+                # -----------------------------------------
+
+                test_cases = [
+                    ([1, 2, 3, 4], [1, 4, 9, 16]),
+                    ([2, 5], [4, 25]),
+                    ([0], [0]),
+                    ([], [])
+                ]
+
+                passed = 0
+
+                st.markdown("## 🧪 Test Case Results")
+
+                for idx, (inp, expected) in enumerate(test_cases):
+
+                    try:
+
+                        output = func(inp)
+
+                        if output == expected:
+
+                            passed += 1
+
+                            st.success(
+                                f"Test Case {idx+1} Passed ✅"
+                            )
+
+                        else:
+
+                            st.error(
+                                f"""
+                                Test Case {idx+1} Failed ❌
+
+                                Input:
+                                {inp}
+
+                                Expected:
+                                {expected}
+
+                                Got:
+                                {output}
+                                """
+                            )
+
+                    except Exception as e:
+
+                        st.error(
+                            f"""
+                            Test Case {idx+1} Error ❌
+
+                            {e}
+                            """
+                        )
+
+                # -----------------------------------------
+                # FINAL RESULT
+                # -----------------------------------------
+
+                st.markdown("---")
+
+                st.markdown(
+                    f"### ✅ Passed {passed}/4 Test Cases"
+                )
+
+                if passed == 4:
+
+                    st.balloons()
+
+                    st.success(
+                        "🎉 All Test Cases Passed"
+                    )
+
+                    st.session_state.module_completed = True
+
+                else:
+
+                    st.warning(
+                        "⚠️ Some test cases failed"
+                    )
+
+        except Exception as e:
 
             st.error(
-                "❌ Test failed"
+                f"Execution Error: {e}"
             )
 
     # -----------------------------------------------------
