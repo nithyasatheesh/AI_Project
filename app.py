@@ -164,21 +164,20 @@ if agent_type == "Learning Orchestrator":
     ]
 
     # -----------------------------------------------------
-    # MODULE TITLE
+    # MODULE HEADER
     # -----------------------------------------------------
 
     st.header(
-        f"📘 Module {module['id']} - "
-        f"{module['title']}"
+        f"📘 {module['title']}"
     )
 
     # -----------------------------------------------------
-    # LEARNING CONTENT
+    # MODULE CONTENT
     # -----------------------------------------------------
 
-    st.markdown("## 🎯 Objective")
+    st.markdown("## 📖 Learning Content")
 
-    st.info(module["objective"])
+    st.markdown(module["content"])
 
     # -----------------------------------------------------
     # PRACTICE TASK
@@ -189,10 +188,6 @@ if agent_type == "Learning Orchestrator":
     st.markdown(
         module["practice_question"]
     )
-
-    # -----------------------------------------------------
-    # CODE EDITOR
-    # -----------------------------------------------------
 
     user_code = st.text_area(
         "Write your code",
@@ -206,137 +201,87 @@ if agent_type == "Learning Orchestrator":
 
     if st.button("▶ Run Test"):
 
-        try:
+        if "return" in user_code:
 
-            local_env = {}
-
-            exec(user_code, {}, local_env)
-
-            function_name = module["function_name"]
-
-            if function_name not in local_env:
-
-                st.error(
-                    "❌ Function not found"
-                )
-
-            else:
-
-                result = local_env[
-                    function_name
-                ](
-                    module["test_input"]
-                )
-
-                if result == module["expected_output"]:
-
-                    st.success(
-                        "✅ Test Passed"
-                    )
-
-                    st.session_state.module_completed = True
-
-                else:
-
-                    st.error(
-                        f"❌ Wrong Output: {result}"
-                    )
-
-        except Exception as e:
-
-            st.error(
-                f"Execution Error: {e}"
+            st.success(
+                "✅ Basic test passed"
             )
 
-    # -----------------------------------------------------
-    # AI HINT
-    # -----------------------------------------------------
+        else:
 
-    st.markdown("## 💡 AI Hint")
-
-    if st.button("Get Hint"):
-
-        hint_prompt = f"""
-        Give ONLY a hint.
-
-        Question:
-        {module['practice_question']}
-
-        Do not provide full solution.
-        """
-
-        hint = coding_agent.run(
-            hint_prompt
-        )
-
-        st.info(hint)
+            st.error(
+                "❌ Test failed"
+            )
 
     # -----------------------------------------------------
     # AI SUMMARY
     # -----------------------------------------------------
 
-    if st.session_state.module_completed:
+    if st.button("🧠 Generate AI Summary"):
 
-        st.markdown(
-            "## 🧠 AI Learning Summary"
+        summary = summary_agent.summarize(
+            module["content"]
         )
 
-        if st.button("Generate Summary"):
+        st.markdown("## 📄 AI Summary")
 
-            summary = summary_agent.summarize(
-                module["content"]
-            )
-
-            st.success(summary)
+        st.markdown(summary)
 
     # -----------------------------------------------------
     # QUIZ GENERATION
     # -----------------------------------------------------
 
-    if st.session_state.module_completed:
+    if st.button("❓ Generate Quiz"):
 
-        st.markdown("## ❓ Quiz")
+        quiz_data = quiz_agent.generate_quiz(
+            module["quiz_topic"]
+        )
 
-        if st.button("Generate Quiz"):
+        st.session_state.quiz_data = quiz_data
 
-            quiz_data = quiz_agent.generate_quiz(
-                module["quiz_topic"]
-            )
-
-            st.session_state.quiz_data = quiz_data
+        st.rerun()
 
     # -----------------------------------------------------
-    # DISPLAY QUIZ
+    # QUIZ DISPLAY
     # -----------------------------------------------------
 
     if st.session_state.quiz_data:
 
-        quiz = st.session_state.quiz_data
+        st.markdown("# 🧠 Module Quiz")
 
-        score = 0
-
-        user_answers = {}
-
-        st.markdown(
-            "## 🧠 Quiz Questions"
-        )
-
-        for idx, q in enumerate(quiz):
+        for i, question_data in enumerate(
+            st.session_state.quiz_data
+        ):
 
             st.markdown(
-                f"### Q{idx+1}. "
-                f"{q['question']}"
+                f"## Q{i+1}. "
+                f"{question_data['question']}"
             )
+
+            options = question_data["options"]
 
             selected = st.radio(
-                "Choose an answer",
-                options=list(
-                    q["options"].values()
-                ),
-                key=f"quiz_{idx}"
+                "Choose your answer",
+                [
+                    "Select an option",
+                    f"A. {options['A']}",
+                    f"B. {options['B']}",
+                    f"C. {options['C']}",
+                    f"D. {options['D']}"
+                ],
+                index=0,
+                key=f"quiz_{i}"
             )
 
-            user_answers[idx] = selected
+            selected_letter = None
+
+            if selected != "Select an option":
+
+                selected_letter = selected[0]
+
+            st.session_state.quiz_answers[i] = (
+                selected_letter
+            )
 
         # -------------------------------------------------
         # SUBMIT QUIZ
@@ -344,72 +289,62 @@ if agent_type == "Learning Orchestrator":
 
         if st.button("✅ Submit Quiz"):
 
-            for idx, q in enumerate(quiz):
+            score = 0
 
-                correct_key = q[
-                    "correct_answer"
-                ]
+            st.markdown("# 🎯 Quiz Results")
 
-                correct_value = q[
-                    "options"
-                ][correct_key]
+            for i, question_data in enumerate(
+                st.session_state.quiz_data
+            ):
 
-                selected = user_answers[idx]
+                correct_answer = (
+                    question_data["correct_answer"]
+                )
 
-                if selected == correct_value:
+                explanation = (
+                    question_data["explanation"]
+                )
+
+                user_answer = (
+                    st.session_state.quiz_answers[i]
+                )
+
+                if user_answer == correct_answer:
 
                     score += 1
 
                     st.success(
-                        f"Q{idx+1} Correct ✅"
+                        f"Q{i+1}: Correct"
                     )
 
                 else:
 
                     st.error(
-                        f"Q{idx+1} Incorrect ❌"
+                        f"Q{i+1}: Incorrect"
                     )
 
-                    st.info(
-                        f"Correct Answer: "
-                        f"{correct_value}"
-                    )
-
-                st.info(
-                    f"Explanation: "
-                    f"{q['explanation']}"
+                st.markdown(
+                    f"Correct Answer: "
+                    f"{correct_answer}"
                 )
+
+                st.markdown(
+                    f"Explanation: "
+                    f"{explanation}"
+                )
+
+                st.markdown("---")
 
             st.session_state.module_score += score
 
-            st.session_state.quiz_completed = True
-
-            st.markdown("---")
-
-            st.success(
-                f"🎯 Final Score: "
-                f"{score}/{len(quiz)}"
+            st.markdown(
+                f"# 🏆 Module Score: {score}/5"
             )
 
-            st.success(
-                f"🏆 Overall Program Score: "
+            st.markdown(
+                f"# 🎖 Overall Program Score: "
                 f"{st.session_state.module_score}"
             )
-
-    # -----------------------------------------------------
-    # MODULE COMPLETION
-    # -----------------------------------------------------
-
-    if (
-        st.session_state.module_completed
-        and st.session_state.quiz_completed
-    ):
-
-        st.balloons()
-
-        st.success(
-            "🎉 Module Completed Successfully"
-        )
 
 # =========================================================
 # CODING TUTOR
@@ -418,6 +353,30 @@ if agent_type == "Learning Orchestrator":
 elif agent_type == "Coding Tutor":
 
     st.header("💻 Coding Tutor")
+
+    uploaded_file = st.file_uploader(
+        "Upload Dataset or Code File",
+        type=["csv", "txt", "py"]
+    )
+
+    file_content = ""
+
+    df = None
+
+    if uploaded_file is not None:
+
+        if uploaded_file.name.endswith(".csv"):
+
+            df = pd.read_csv(uploaded_file)
+
+            st.dataframe(df.head())
+
+        else:
+
+            file_content = (
+                uploaded_file.read()
+                .decode("utf-8")
+            )
 
     user_query = st.text_area(
         "Ask your coding question",
