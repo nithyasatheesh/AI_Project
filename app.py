@@ -172,59 +172,6 @@ if agent_type == "Learning Orchestrator":
     )
 
     # -----------------------------------------------------
-    # MODULE NAVIGATION
-    # -----------------------------------------------------
-
-    col1, col2 = st.columns(2)
-
-    # ---------------------------------------------
-    # PREVIOUS MODULE
-    # ---------------------------------------------
-
-    with col1:
-
-        if st.session_state.current_module > 0:
-
-            if st.button("⬅ Previous Module"):
-
-                st.session_state.current_module -= 1
-
-                st.session_state.quiz_data = None
-
-                st.session_state.quiz_answers = {}
-
-                st.session_state.module_completed = False
-
-                st.session_state.quiz_completed = False
-
-                st.rerun()
-
-    # ---------------------------------------------
-    # NEXT MODULE
-    # ---------------------------------------------
-
-    with col2:
-
-        if (
-            st.session_state.current_module
-            < len(modules_data["modules"]) - 1
-        ):
-
-            if st.button("Next Module ➡"):
-
-                st.session_state.current_module += 1
-
-                st.session_state.quiz_data = None
-
-                st.session_state.quiz_answers = {}
-
-                st.session_state.module_completed = False
-
-                st.session_state.quiz_completed = False
-
-                st.rerun()
-
-    # -----------------------------------------------------
     # MODULE CONTENT
     # -----------------------------------------------------
 
@@ -490,6 +437,63 @@ if agent_type == "Learning Orchestrator":
                 f"# 🎖 Overall Program Score: "
                 f"{st.session_state.module_score}"
             )
+
+    # -----------------------------------------------------
+    # MODULE COMPLETION NAVIGATION
+    # -----------------------------------------------------
+
+    if st.session_state.module_completed:
+
+        st.markdown("---")
+
+        col1, col2 = st.columns(2)
+
+        # ---------------------------------------------
+        # PREVIOUS MODULE
+        # ---------------------------------------------
+
+        with col1:
+
+            if st.session_state.current_module > 0:
+
+                if st.button("⬅ Previous Module"):
+
+                    st.session_state.current_module -= 1
+
+                    st.session_state.quiz_data = None
+
+                    st.session_state.quiz_answers = {}
+
+                    st.session_state.module_completed = False
+
+                    st.session_state.quiz_completed = False
+
+                    st.rerun()
+
+        # ---------------------------------------------
+        # NEXT MODULE
+        # ---------------------------------------------
+
+        with col2:
+
+            if (
+                st.session_state.current_module
+                < len(modules_data["modules"]) - 1
+            ):
+
+                if st.button("Next Module ➡"):
+
+                    st.session_state.current_module += 1
+
+                    st.session_state.quiz_data = None
+
+                    st.session_state.quiz_answers = {}
+
+                    st.session_state.module_completed = False
+
+                    st.session_state.quiz_completed = False
+
+                    st.rerun()
 
 # =========================================================
 # CODING TUTOR
