@@ -8,13 +8,32 @@
 
       "title": "Python Basics",
 
-      "content": "Python functions are reusable blocks of code used to perform specific tasks. Functions improve readability and modularity. Lists can be processed using loops.",
+      "content": "Python functions are reusable blocks of code used to perform specific tasks. Lists can be processed using loops.",
 
       "practice_question": "Write a Python function to create a list containing squares of elements from a given list.",
 
       "starter_code": "def square_list(L):\n    pass",
 
       "function_name": "square_list",
+
+      "test_cases": [
+        {
+          "input": [1, 2, 3, 4],
+          "expected": [1, 4, 9, 16]
+        },
+        {
+          "input": [2, 5],
+          "expected": [4, 25]
+        },
+        {
+          "input": [0],
+          "expected": [0]
+        },
+        {
+          "input": [],
+          "expected": []
+        }
+      ],
 
       "quiz_topic": "Python Basics"
     },
@@ -24,13 +43,32 @@
 
       "title": "List Comprehension",
 
-      "content": "List comprehension provides concise syntax for creating and transforming lists in Python. It improves readability and reduces lines of code.",
+      "content": "List comprehension provides concise syntax for transforming lists in Python.",
 
       "practice_question": "Write a Python function using list comprehension to return cubes of elements from a list.",
 
       "starter_code": "def cube_list(L):\n    pass",
 
       "function_name": "cube_list",
+
+      "test_cases": [
+        {
+          "input": [1, 2, 3, 4],
+          "expected": [1, 8, 27, 64]
+        },
+        {
+          "input": [2, 5],
+          "expected": [8, 125]
+        },
+        {
+          "input": [0],
+          "expected": [0]
+        },
+        {
+          "input": [],
+          "expected": []
+        }
+      ],
 
       "quiz_topic": "List Comprehension"
     }
