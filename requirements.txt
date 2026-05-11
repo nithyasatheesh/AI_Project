@@ -6,3 +6,4 @@ matplotlib
 gtts
 PyPDF2
 openpyxl
+streamlit-ace
