@@ -1,9 +1,10 @@
-# =========================
+# =========================================================
 # app.py
-# =========================
+# =========================================================
 
 import streamlit as st
 import pandas as pd
+import json
 import PyPDF2
 
 from agents.coding_tutor_agent import CodingTutorAgent
@@ -18,12 +19,23 @@ from agents.evaluator import EvaluatorAgent
 # =========================================================
 
 st.set_page_config(
-    page_title="Multi-Agent AI Learning Platform",
+    page_title="AdaptiveSkill AI",
     page_icon="🤖",
     layout="wide"
 )
 
-st.title("🤖 Multi-Agent AI Learning Platform")
+st.title("🤖 AdaptiveSkill AI")
+st.subheader(
+    "Multi-Agent AI Learning & Evaluation Platform"
+)
+
+# =========================================================
+# LOAD MODULES
+# =========================================================
+
+with open("modules.json") as f:
+
+    modules_data = json.load(f)
 
 # =========================================================
 # AGENTS
@@ -54,13 +66,20 @@ if "quiz_data" not in st.session_state:
 if "quiz_answers" not in st.session_state:
     st.session_state.quiz_answers = {}
 
+if "current_module" not in st.session_state:
+    st.session_state.current_module = 0
+
+if "module_score" not in st.session_state:
+    st.session_state.module_score = 0
+
 # =========================================================
 # SIDEBAR
 # =========================================================
 
 agent_type = st.sidebar.selectbox(
-    "Select Agent",
+    "Select Workflow",
     [
+        "Learning Orchestrator",
         "Coding Tutor",
         "Summary Agent",
         "Evaluator Agent",
@@ -69,7 +88,7 @@ agent_type = st.sidebar.selectbox(
 )
 
 # =========================================================
-# CLEAR CHAT WHEN AGENT CHANGES
+# CLEAR STATE ON SWITCH
 # =========================================================
 
 if "last_agent" not in st.session_state:
@@ -133,358 +152,257 @@ def truncate_text(text, limit=4000):
     return text
 
 # =========================================================
-# EVALUATOR AGENT
+# LEARNING ORCHESTRATOR
 # =========================================================
 
-if agent_type == "Evaluator Agent":
+if agent_type == "Learning Orchestrator":
 
-    st.header("🧪 Evaluator Agent")
+    module = modules_data["modules"][
+        st.session_state.current_module
+    ]
 
     # -----------------------------------------------------
-    # PROBLEM STATEMENT
+    # MODULE HEADER
     # -----------------------------------------------------
 
-    st.subheader("📄 Problem Statement")
-
-    typed_problem_statement = st.text_area(
-        "Type Problem Statement (Optional)",
-        height=180
-    )
-
-    uploaded_problem = st.file_uploader(
-        "Upload Problem Statement",
-        type=[
-            "txt",
-            "pdf",
-            "py",
-            "html",
-            "docx"
-        ],
-        key="problem_statement"
+    st.header(
+        f"📘 Module {module['id']} - "
+        f"{module['title']}"
     )
 
     # -----------------------------------------------------
-    # RUBRIC
+    # MODULE CONTENT
     # -----------------------------------------------------
 
-    st.subheader("📋 Evaluation Rubric")
+    st.markdown("## 📖 Learning Content")
 
-    typed_rubric = st.text_area(
-        "Type Rubric (Optional)",
-        height=180
-    )
-
-    uploaded_rubric = st.file_uploader(
-        "Upload Rubric",
-        type=[
-            "txt",
-            "pdf",
-            "csv",
-            "xlsx"
-        ],
-        key="rubric"
-    )
+    st.markdown(module["content"])
 
     # -----------------------------------------------------
-    # PARTICIPANT SUBMISSION
+    # PRACTICE TASK
     # -----------------------------------------------------
 
-    st.subheader("💻 Participant Submission")
+    st.markdown("## 💻 Practice Task")
 
-    typed_submission = st.text_area(
-        "Type Submission (Optional)",
-        height=220
+    st.markdown(
+        module["practice_question"]
     )
 
-    uploaded_submission = st.file_uploader(
-        "Upload Submission",
-        type=[
-            "txt",
-            "py",
-            "html",
-            "sql",
-            "csv",
-            "xlsx"
-        ],
-        key="submission"
+    user_code = st.text_area(
+        "Write your code",
+        value=module["starter_code"],
+        height=300
     )
 
     # -----------------------------------------------------
-    # OPTIONAL DATASET
+    # RUN TEST
     # -----------------------------------------------------
 
-    st.subheader("📊 Optional Dataset")
+    if st.button("▶ Run Test"):
 
-    uploaded_dataset = st.file_uploader(
-        "Upload Dataset",
-        type=[
-            "csv",
-            "xlsx"
-        ],
-        key="dataset"
-    )
+        if "return" in user_code:
 
-    # =====================================================
-    # PROCESS FILES
-    # =====================================================
-
-    problem_statement = typed_problem_statement
-
-    rubric = typed_rubric
-
-    participant_submission = typed_submission
-
-    dataset_info = ""
-
-    # -----------------------------------------------------
-    # PROBLEM FILE
-    # -----------------------------------------------------
-
-    if uploaded_problem is not None:
-
-        if uploaded_problem.name.endswith(".pdf"):
-
-            problem_statement += (
-                "\n\n"
-                + read_pdf_file(uploaded_problem)
+            st.success(
+                "✅ Basic test passed"
             )
 
         else:
 
-            problem_statement += (
-                "\n\n"
-                + read_text_file(uploaded_problem)
+            st.error(
+                "❌ Test failed"
             )
 
-        st.success(
-            f"Problem statement uploaded: "
-            f"{uploaded_problem.name}"
+    # -----------------------------------------------------
+    # AI SUMMARY
+    # -----------------------------------------------------
+
+    if st.button("🧠 Generate AI Summary"):
+
+        summary = summary_agent.summarize(
+            module["content"]
         )
 
-    # -----------------------------------------------------
-    # RUBRIC FILE
-    # -----------------------------------------------------
+        st.markdown("## 📄 AI Summary")
 
-    if uploaded_rubric is not None:
+        st.markdown(summary)
 
-        if uploaded_rubric.name.endswith(".txt"):
+        # Audio Summary
 
-            rubric += (
-                "\n\n"
-                + read_text_file(uploaded_rubric)
+        audio_file, audio_summary = (
+            audio_agent.generate_audio_summary(
+                summary
             )
-
-        elif uploaded_rubric.name.endswith(".pdf"):
-
-            rubric += (
-                "\n\n"
-                + read_pdf_file(uploaded_rubric)
-            )
-
-        elif uploaded_rubric.name.endswith(".csv"):
-
-            rubric_df = pd.read_csv(
-                uploaded_rubric
-            )
-
-            rubric += (
-                "\n\n"
-                + rubric_df.to_string()
-            )
-
-        elif uploaded_rubric.name.endswith(".xlsx"):
-
-            rubric_df = pd.read_excel(
-                uploaded_rubric
-            )
-
-            rubric += (
-                "\n\n"
-                + rubric_df.to_string()
-            )
-
-        st.success(
-            f"Rubric uploaded: "
-            f"{uploaded_rubric.name}"
         )
 
+        if audio_file:
+
+            audio_bytes = open(
+                audio_file,
+                "rb"
+            ).read()
+
+            st.audio(
+                audio_bytes,
+                format="audio/mp3"
+            )
+
     # -----------------------------------------------------
-    # SUBMISSION FILE
+    # QUIZ GENERATION
     # -----------------------------------------------------
 
-    if uploaded_submission is not None:
+    if st.button("❓ Generate Quiz"):
 
-        if (
-            uploaded_submission.name.endswith(".txt")
-            or uploaded_submission.name.endswith(".py")
-            or uploaded_submission.name.endswith(".html")
-            or uploaded_submission.name.endswith(".sql")
+        quiz_data = quiz_agent.generate_quiz(
+            module["quiz_topic"]
+        )
+
+        st.session_state.quiz_data = quiz_data
+
+        st.rerun()
+
+    # -----------------------------------------------------
+    # QUIZ DISPLAY
+    # -----------------------------------------------------
+
+    if st.session_state.quiz_data:
+
+        st.markdown("# 🧠 Module Quiz")
+
+        for i, question_data in enumerate(
+            st.session_state.quiz_data
         ):
 
-            participant_submission += (
-                "\n\n"
-                + read_text_file(uploaded_submission)
+            st.markdown(
+                f"## Q{i+1}. "
+                f"{question_data['question']}"
             )
 
-        elif uploaded_submission.name.endswith(".csv"):
+            options = question_data["options"]
 
-            df = pd.read_csv(
-                uploaded_submission
+            selected = st.radio(
+                "Choose your answer",
+                [
+                    "Select an option",
+                    f"A. {options['A']}",
+                    f"B. {options['B']}",
+                    f"C. {options['C']}",
+                    f"D. {options['D']}"
+                ],
+                index=0,
+                key=f"quiz_{i}"
             )
 
-            participant_submission += (
-                "\n\n"
-                + df.head(20).to_string()
+            selected_letter = None
+
+            if selected != "Select an option":
+
+                selected_letter = selected[0]
+
+            st.session_state.quiz_answers[i] = (
+                selected_letter
             )
 
-        elif uploaded_submission.name.endswith(".xlsx"):
+        # -------------------------------------------------
+        # SUBMIT QUIZ
+        # -------------------------------------------------
 
-            df = pd.read_excel(
-                uploaded_submission
-            )
+        if st.button("✅ Submit Quiz"):
 
-            participant_submission += (
-                "\n\n"
-                + df.head(20).to_string()
-            )
+            score = 0
 
-        st.success(
-            f"Submission uploaded: "
-            f"{uploaded_submission.name}"
-        )
+            st.markdown("# 🎯 Quiz Results")
 
-    # -----------------------------------------------------
-    # OPTIONAL DATASET
-    # -----------------------------------------------------
-
-    if uploaded_dataset is not None:
-
-        if uploaded_dataset.name.endswith(".csv"):
-
-            dataset_df = pd.read_csv(
-                uploaded_dataset
-            )
-
-        else:
-
-            dataset_df = pd.read_excel(
-                uploaded_dataset
-            )
-
-        st.markdown("### 📊 Dataset Preview")
-
-        st.dataframe(dataset_df.head())
-
-        dataset_info = (
-            dataset_df.head(10)
-            .to_string()
-        )
-
-    # =====================================================
-    # TRUNCATE CONTENT
-    # =====================================================
-
-    problem_statement = truncate_text(
-        problem_statement,
-        4000
-    )
-
-    rubric = truncate_text(
-        rubric,
-        3000
-    )
-
-    participant_submission = truncate_text(
-        participant_submission,
-        6000
-    )
-
-    dataset_info = truncate_text(
-        dataset_info,
-        2000
-    )
-
-    # =====================================================
-    # RUN EVALUATION
-    # =====================================================
-
-    if st.button("🚀 Evaluate Submission"):
-
-        if not problem_statement.strip():
-
-            st.warning(
-                "Please provide problem statement."
-            )
-
-        elif not rubric.strip():
-
-            st.warning(
-                "Please provide rubric."
-            )
-
-        elif not participant_submission.strip():
-
-            st.warning(
-                "Please provide participant submission."
-            )
-
-        else:
-
-            with st.spinner(
-                "Evaluating submission..."
+            for i, question_data in enumerate(
+                st.session_state.quiz_data
             ):
 
-                response = evaluator_agent.evaluate(
-                    problem_statement,
-                    rubric,
-                    participant_submission,
-                    dataset_info
+                correct_answer = (
+                    question_data["correct_answer"]
                 )
 
-            st.markdown("## 📊 Evaluation Result")
-
-            st.markdown(response)
-
-            # ---------------------------------------------
-            # AUDIO SUMMARY
-            # ---------------------------------------------
-
-            st.markdown("## 🔊 Audio Summary")
-
-            audio_file, summary = (
-                audio_agent.generate_audio_summary(
-                    response
+                explanation = (
+                    question_data["explanation"]
                 )
+
+                user_answer = (
+                    st.session_state.quiz_answers[i]
+                )
+
+                if user_answer == correct_answer:
+
+                    score += 1
+
+                    st.success(
+                        f"Q{i+1}: Correct"
+                    )
+
+                else:
+
+                    st.error(
+                        f"Q{i+1}: Incorrect"
+                    )
+
+                st.markdown(
+                    f"Correct Answer: "
+                    f"{correct_answer}"
+                )
+
+                st.markdown(
+                    f"Explanation: "
+                    f"{explanation}"
+                )
+
+                st.markdown("---")
+
+            st.session_state.module_score += score
+
+            st.markdown(
+                f"# 🏆 Module Score: {score}/5"
             )
 
-            st.markdown(summary)
+            st.markdown(
+                f"# 🎖 Overall Program Score: "
+                f"{st.session_state.module_score}"
+            )
 
-            if audio_file:
+    # -----------------------------------------------------
+    # NEXT MODULE
+    # -----------------------------------------------------
 
-                audio_bytes = open(
-                    audio_file,
-                    "rb"
-                ).read()
+    st.markdown("---")
 
-                st.audio(
-                    audio_bytes,
-                    format="audio/mp3"
-                )
+    if st.button("➡ Next Module"):
+
+        if (
+            st.session_state.current_module
+            < len(modules_data["modules"]) - 1
+        ):
+
+            st.session_state.current_module += 1
+
+            st.session_state.quiz_data = None
+
+            st.session_state.quiz_answers = {}
+
+            st.rerun()
+
+        else:
+
+            st.success(
+                "🎉 Program Completed!"
+            )
 
 # =========================================================
-# OTHER AGENTS
+# CODING TUTOR
 # =========================================================
 
-else:
+elif agent_type == "Coding Tutor":
+
+    st.header("💻 Coding Tutor")
 
     uploaded_file = st.file_uploader(
-        "📂 Upload Dataset or Code File",
-        type=[
-            "csv",
-            "txt",
-            "py",
-            "md"
-        ]
+        "Upload Dataset or Code File",
+        type=["csv", "txt", "py"]
     )
 
     file_content = ""
@@ -507,161 +425,95 @@ else:
             )
 
     user_query = st.text_area(
-        "💬 Enter your question",
-        height=160
+        "Ask your coding question",
+        height=180
     )
 
-    if st.button("🚀 Run Agent"):
+    if st.button("🚀 Ask Tutor"):
 
-        st.session_state.messages.append({
-            "role": "user",
-            "content": user_query
-        })
+        response = coding_agent.run(
+            user_query
+        )
 
-        response = ""
-
-        # ------------------------------------------------
-        # CODING TUTOR
-        # ------------------------------------------------
-
-        if agent_type == "Coding Tutor":
-
-            response = coding_agent.run(
-                user_query
-            )
-
-        # ------------------------------------------------
-        # SUMMARY AGENT
-        # ------------------------------------------------
-
-        elif agent_type == "Summary Agent":
-
-            if file_content:
-
-                response = summary_agent.summarize(
-                    file_content
-                )
-
-            else:
-
-                response = (
-                    "Please upload a document."
-                )
-
-        # ------------------------------------------------
-        # QUIZ GENERATOR
-        # ------------------------------------------------
-
-        elif agent_type == "Quiz Generator":
-
-            quiz_data = quiz_agent.generate_quiz(
-                user_query
-            )
-
-            st.session_state.quiz_data = quiz_data
-
-            response = (
-                f"Quiz generated on: {user_query}"
-            )
-
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": response
-        })
-
-        st.rerun()
+        st.markdown(response)
 
 # =========================================================
-# QUIZ DISPLAY
+# SUMMARY AGENT
 # =========================================================
 
-if (
-    agent_type == "Quiz Generator"
-    and st.session_state.quiz_data
-):
+elif agent_type == "Summary Agent":
 
-    st.markdown("# 🧠 Interactive Quiz")
+    st.header("📄 Summary Agent")
 
-    for i, question_data in enumerate(
-        st.session_state.quiz_data
-    ):
+    uploaded_file = st.file_uploader(
+        "Upload Document",
+        type=["txt", "md", "py"]
+    )
 
-        st.markdown(
-            f"## Q{i+1}. "
-            f"{question_data['question']}"
+    if uploaded_file is not None:
+
+        file_content = (
+            uploaded_file.read()
+            .decode("utf-8")
         )
 
-        options = question_data["options"]
+        if st.button("🧠 Generate Summary"):
 
-        selected = st.radio(
-            "Choose your answer",
-            [
-                "Select an option",
-                f"A. {options['A']}",
-                f"B. {options['B']}",
-                f"C. {options['C']}",
-                f"D. {options['D']}"
-            ],
-            index=0,
-            key=f"quiz_{i}"
+            response = summary_agent.summarize(
+                file_content
+            )
+
+            st.markdown(response)
+
+# =========================================================
+# EVALUATOR AGENT
+# =========================================================
+
+elif agent_type == "Evaluator Agent":
+
+    st.header("🧪 Evaluator Agent")
+
+    problem_statement = st.text_area(
+        "Problem Statement",
+        height=180
+    )
+
+    rubric = st.text_area(
+        "Rubric",
+        height=180
+    )
+
+    submission = st.text_area(
+        "Participant Submission",
+        height=250
+    )
+
+    if st.button("🚀 Evaluate"):
+
+        response = evaluator_agent.evaluate(
+            problem_statement,
+            rubric,
+            submission
         )
 
-        selected_letter = None
+        st.markdown(response)
 
-        if selected != "Select an option":
+# =========================================================
+# QUIZ GENERATOR
+# =========================================================
 
-            selected_letter = selected[0]
+elif agent_type == "Quiz Generator":
 
-        st.session_state.quiz_answers[i] = (
-            selected_letter
+    st.header("🧠 Quiz Generator")
+
+    topic = st.text_input(
+        "Enter Topic"
+    )
+
+    if st.button("❓ Generate Quiz"):
+
+        quiz_data = quiz_agent.generate_quiz(
+            topic
         )
 
-    if st.button("✅ Submit Quiz"):
-
-        score = 0
-
-        st.markdown("# 🎯 Quiz Results")
-
-        for i, question_data in enumerate(
-            st.session_state.quiz_data
-        ):
-
-            correct_answer = (
-                question_data["correct_answer"]
-            )
-
-            explanation = (
-                question_data["explanation"]
-            )
-
-            user_answer = (
-                st.session_state.quiz_answers[i]
-            )
-
-            if user_answer == correct_answer:
-
-                score += 1
-
-                st.success(
-                    f"Q{i+1}: Correct"
-                )
-
-            else:
-
-                st.error(
-                    f"Q{i+1}: Incorrect"
-                )
-
-            st.markdown(
-                f"Correct Answer: {correct_answer}"
-            )
-
-            st.markdown(
-                f"Explanation: {explanation}"
-            )
-
-            st.markdown("---")
-
-        st.markdown(
-            f"# 🏆 Final Score: {score}/5"
-        )
+        st.json(quiz_data)
