@@ -173,47 +173,6 @@ if agent_type == "Learning Orchestrator":
     )
 
     # -----------------------------------------------------
-    # MODULE NAVIGATION
-    # -----------------------------------------------------
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        if st.button("⬅ Previous Module"):
-
-            if st.session_state.current_module > 0:
-
-                st.session_state.current_module -= 1
-
-                st.session_state.module_completed = False
-
-                st.session_state.quiz_completed = False
-
-                st.session_state.quiz_data = None
-
-                st.rerun()
-
-    with col2:
-
-        if st.button("Next Module ➡"):
-
-            if (
-                st.session_state.current_module
-                < len(modules_data["modules"]) - 1
-            ):
-
-                st.session_state.current_module += 1
-
-                st.session_state.module_completed = False
-
-                st.session_state.quiz_completed = False
-
-                st.session_state.quiz_data = None
-
-                st.rerun()
-
-    # -----------------------------------------------------
     # LEARNING CONTENT
     # -----------------------------------------------------
 
