@@ -4,43 +4,11 @@
     {
       "id": 1,
       "title": "Python Basics",
-
-      "objective": "Learn Python functions and list processing.",
-
-      "content": "Functions in Python are reusable blocks of code used to perform tasks.",
-
+      "content": "Learn variables, loops and functions.",
       "practice_question": "Write a function to square list elements.",
-
       "starter_code": "def square_list(L):\n    pass",
-
-      "function_name": "square_list",
-
-      "test_input": [1, 2, 3, 4],
-
-      "expected_output": [1, 4, 9, 16],
-
+      "expected_output": "[1,4,9,16]",
       "quiz_topic": "Python Basics"
-    },
-
-    {
-      "id": 2,
-      "title": "List Comprehension",
-
-      "objective": "Learn list comprehension syntax in Python.",
-
-      "content": "List comprehension provides concise syntax for list transformations.",
-
-      "practice_question": "Create squares using list comprehension.",
-
-      "starter_code": "def square_list(L):\n    pass",
-
-      "function_name": "square_list",
-
-      "test_input": [1, 2, 3, 4],
-
-      "expected_output": [1, 4, 9, 16],
-
-      "quiz_topic": "List Comprehension"
     }
   ]
 }
